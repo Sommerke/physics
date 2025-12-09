@@ -119,3 +119,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 X_FRAME_OPTIONS = "ALLOWALL" 
+
+CSRF_TRUSTED_ORIGIN = [
+    'https://physics-production-e20e.up.railway.app/'
+]
