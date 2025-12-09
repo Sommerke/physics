@@ -1,1 +1,1 @@
-web: gunicorn config.wsgi --bind 0.0.0.0:$PORT
+web: gunicorn config.wsgi --bind 0.0.0.0:$PORT --log-level debug --error-logfile - --access-logfile - --capture-output
