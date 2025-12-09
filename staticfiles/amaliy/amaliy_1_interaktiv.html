@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+  <h2 class="mb-4 text-success">🔬 1-Amaliy Mashg'ulot: Trayektoriya tushunchasi</h2>
+
+  <!-- 1. PDF Viewer -->
+  <div class="mb-5">
+    <h5 class="text-primary">📘 Ma'ruza fayli</h5>
+    <div class="ratio ratio-16x9">
+      <iframe src="{% static 'amaliy/amaliy1.pdf' %}" frameborder="0" allowfullscreen></iframe>
+    </div>
+    <a href="{% static 'amaliy/amaliy1.pdf' %}" class="btn btn-outline-primary mt-2">⬇ Yuklab olish</a>
+  </div>
+
+  <!-- 2. Video Darslik -->
+  <div class="mb-5">
+    <h5 class="text-warning">🎥 Tushuntiruvchi Video</h5>
+    <div class="ratio ratio-16x9">
+      <video controls>
+        <source src="{% static 'video/trayektoriya.mp4' %}" type="video/mp4">
+        Brauzeringiz video formatini qo'llab-quvvatlamaydi.
+      </video>
+    </div>
+  </div>
+
+  <!-- 3. Mini Test -->
+  <div class="mb-5">
+    <h5 class="text-danger">🧠 Mini Test: Trayektoriya</h5>
+    <form id="mini-test">
+      <p><strong>Savol:</strong> Trayektoriya nima?</p>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="javob" value="A" id="javobA">
+        <label class="form-check-label" for="javobA">A) Harakatning boshlanish nuqtasi</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="javob" value="B" id="javobB">
+        <label class="form-check-label" for="javobB">B) Jism egallagan yo‘li</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="javob" value="C" id="javobC">
+        <label class="form-check-label" for="javobC">C) Kuch yo‘nalishi</label>
+      </div>
+      <div class="form-check">
+        <input class="form-check-input" type="radio" name="javob" value="D" id="javobD">
+        <label class="form-check-label" for="javobD">D) Jism massasi</label>
+      </div>
+      <button type="button" class="btn btn-success mt-2" onclick="tekshir()">Tekshirish</button>
+      <div id="javobNatija" class="mt-3 fw-semibold"></div>
+    </form>
+  </div>
+
+  <!-- 4. Yuklash -->
+  <div class="mb-5">
+    <h5 class="text-info">📤 Topshiriqni yuklang</h5>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="mb-3">
+        <input type="file" name="file" class="form-control">
+      </div>
+      <button type="submit" class="btn btn-primary">Yuborish</button>
+    </form>
+  </div>
+</div>
+
+<script>
+  function tekshir() {
+    const tanlov = document.querySelector('input[name="javob"]:checked');
+    const natija = document.getElementById('javobNatija');
+    if (!tanlov) {
+      natija.innerText = "Iltimos, javob tanlang!";
+      natija.classList.add('text-danger');
+      return;
+    }
+    if (tanlov.value === 'B') {
+      natija.innerText = "✅ To‘g‘ri javob! Trayektoriya — jism egallagan yo‘ldir.";
+      natija.classList.remove('text-danger');
+      natija.classList.add('text-success');
+    } else {
+      natija.innerText = "❌ Noto‘g‘ri javob. Yana urinib ko‘ring.";
+      natija.classList.remove('text-success');
+      natija.classList.add('text-danger');
+    }
+  }
+</script>
+{% endblock %}

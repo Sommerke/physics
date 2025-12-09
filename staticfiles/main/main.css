@@ -1,0 +1,28 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #000; /* Fallback */
+    height: 100vh;
+    margin: 0;
+}
+
+.navbar {
+    background-color: #f0f0f0;
+    padding: 10px 20px;
+    display: flex;
+    justify-content: space-between;
+}
+
+.navbar .left {
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.navbar .right a {
+    margin-left: 15px;
+    text-decoration: none;
+    color: #007bff;
+}
+
+h1, p {
+    text-shadow: 1px 1px 5px #000;
+}

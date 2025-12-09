@@ -1,0 +1,24 @@
+/* BARCHA selektorlarni #am15 bilan namespacela */
+#am15 { --bg:#0b1220; --panel:#10192b; --accent:#4cc9f0; --muted:#9fb3c8; --ok:#22c55e; --warn:#f59e0b; --bad:#ef4444; --card:#0f172a; color:#e6eef7; }
+#am15 * { box-sizing: border-box; }
+#am15 .am15-wrap { margin-top: 8px; }
+#am15 .title { font-size:clamp(18px,2.0vw,28px); font-weight:800; letter-spacing:.3px; margin:0 0 6px; color:#cfe1ff; }
+#am15 .subtitle{ margin:0 0 14px; color:var(--muted); }
+#am15 .grid{ display:grid; grid-template-columns:1.2fr .8fr; gap:16px; }
+#am15 .card15{ background:linear-gradient(0deg,rgba(255,255,255,.02),rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:14px; }
+#am15 .card15 h3{ margin:.2rem 0 1rem; font-size:16px; color:#cfe1ff; }
+#am15 label{ display:block; margin:.2rem 0 .3rem; color:#cfe1ff; }
+#am15 input[type=range]{ width:100%; }
+#am15 .row15{ display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+#am15 .row15 input[type=number]{ width:130px; background:#0b1325; border:1px solid rgba(255,255,255,.1); color:#e6eef7; border-radius:10px; padding:10px; }
+#am15 .pill{ display:inline-flex; align-items:center; gap:8px; background:#0c1528; border:1px solid rgba(255,255,255,.08); padding:8px 12px; border-radius:999px; font-size:13px; color:#cfe1ff; }
+#am15 .kpi{ display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#am15 .kbox{ background:var(--card); border:1px solid rgba(255,255,255,.06); padding:14px; border-radius:12px; }
+#am15 .kbox .lbl{ font-size:12px; color:#a9bed6; }
+#am15 .kbox .val{ font-weight:800; font-size:20px; margin-top:4px; color:#e6eef7; }
+#am15 .eq{ font-family:ui-monospace,Menlo,Consolas,monospace; background:#0b1325; border:1px dashed rgba(255,255,255,.15); padding:10px 12px; border-radius:12px; color:#dbeafe; }
+#am15 .spectrum{ position:relative; height:44px; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,.12); background:linear-gradient(90deg,#6b7280,#7c3aed 14%,#2563eb 28%,#22c55e 42%,#f59e0b 56%,#ef4444 70%,#eab308 84%,#a855f7 100%); }
+#am15 .spec-legend{ display:flex; justify-content:space-between; font-size:12px; color:#dbeafe; margin-top:6px; }
+#am15 .marker{ position:absolute; top:0; bottom:0; width:2px; background:#fff; box-shadow:0 0 8px 2px rgba(255,255,255,.6); }
+#am15 .marker::after{ content:attr(data-label); position:absolute; top:46px; left:50%; transform:translateX(-50%); font-size:12px; color:#cfe1ff; background:#0b1325; border:1px solid rgba(255,255,255,.1); padding:2px 6px; border-radius:6px; white-space:nowrap; }
+@media (max-width:900px){ #am15 .grid{ grid-template-columns:1fr; } }
