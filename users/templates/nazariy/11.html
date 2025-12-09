@@ -1,0 +1,15 @@
+
+{% extends 'base.html' %}
+
+{% block title %}11-mavzu{% endblock %}
+
+{% block sidebar %}
+  {% for i in range(1, 16) %}
+    <div onclick="window.location.href='/nazariy/{{ i }}/'">{{ i }}-mavzu</div>
+  {% endfor %}
+{% endblock %}
+
+{% block content %}
+  <h2>11-mavzu</h2>
+  <p>Bu yerda 11-mavzu haqida ma’lumot joylashadi.</p>
+{% endblock %}

@@ -1,0 +1,732 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- GLOBAL STATIC BAZALAR (templateda render bo‘ladi) -->
+<script>
+  window.STATIC = {
+    amaliyPdfBase: "{% static 'amaliy/' %}",
+    maruzaPdfBase: "{% static 'maruza/' %}",
+    scriptBase:    "{% static 'script/' %}",
+    videoBase:     "{% static 'video/' %}"   
+  };
+</script>
+
+
+
+<style>
+  /* Interaktiv bo'limlar default yashirin */
+  .interaktiv-block { display: none; }
+</style>
+
+<!-- 🔷 Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm py-3">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-primary" href="javascript:void(0)">⚛️ Fizika Platformasi</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav align-items-center gap-3">
+        <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'asosiy_nazariy' %}">Nazariy</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'asosiy_amaliy' %}">Amaliy</a></li>
+        <li class="nav-item"><a class="nav-link fw-semibold" href="{% url 'asosiy_video' %}">Video</a></li>
+
+        <!-- href="#" o'rniga button -->
+        <li class="nav-item">
+         <button type="button" 
+        class="btn btn-warning text-white fw-semibold" 
+        onclick="window.open('https://create.kahoot.it/details/aylanma-harakat-dinmikasi/35e5ce80-b3d7-4971-ae7b-a902bfe516fc', '_blank')">
+    O'zingizni sinab ko'ring
+</button>
+
+        </li>
+
+        {% if user.is_authenticated and user.is_staff %}
+        <li class="nav-item"><a class="btn btn-outline-secondary" href="{% url 'admin_dashboard' %}">🛠 Admin</a></li>
+        {% endif %}
+
+        {% if user.is_authenticated %}
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="javascript:void(0)" data-bs-toggle="dropdown">
+            <div class="rounded-circle bg-primary text-white d-flex justify-content-center align-items-center" style="width: 36px; height: 36px; font-weight: bold;">
+              {{ user.email|default:user.username|slice:":1"|upper }}
+            </div>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><span class="dropdown-item-text">📧 {{ user.email }}</span></li>
+            <li><hr class="dropdown-divider"></li>
+            <li>
+              <!-- Logout: POST + CSRF -->
+              <form action="{% url 'logout' %}" method="post" class="px-3 py-2">
+                {% csrf_token %}
+                <button type="submit" class="dropdown-item text-danger">🚪 Chiqish</button>
+              </form>
+            </li>
+          </ul>
+        </li>
+        {% endif %}
+      </ul>
+    </div>
+  </div>
+</nav>
+
+
+<!-- 📘 Nazariy: Interaktiv PDF Ko‘rish Paneli -->
+<section id="nazariy-block" class="container-fluid mt-5" style="display:none;">
+  <button id="toggleBtn" class="btn btn-outline-secondary w-100 mb-3" onclick="toggleSidebar()">⬅️ Panelni yashirish</button>
+  <div class="row">
+    <!-- Chap panel: Ma’ruzalar -->
+    <div class="col-md-3 border-end" id="sidebar" style="height: 80vh; overflow-y: auto;">
+      <h5 class="text-primary fw-bold mb-3"> Ma’ruzalar</h5>
+      <ul class="list-group">
+        {% for i in maruzalar %}
+        <li class="list-group-item">
+          <!-- onclick o'rniga delegation (pastdagi JS) -->
+          <button type="button" class="btn btn-link p-0 js-maruza-link" data-maruza="{{ i }}">📖 Maruza {{ i }}</button>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- O'ng panel: PDF ko‘rish -->
+    <div class="col-md-9" id="content-area">
+      <iframe id="pdfViewer"
+              src="{% static 'maruza/maruza1.pdf' %}"
+              allowfullscreen
+              style="border:0; width:100%; height:80vh;">
+      </iframe>
+
+      <!-- 📘 Interaktiv tugma shu yerga qo‘shildi -->
+      <a href="javascript:void(0)" 
+      id="interaktivLinkNazariy" 
+      class="btn btn-outline-primary mt-3" 
+      style="display: none;"
+      onclick="showInteraktivNazariy(event)">
+      Interaktiv topshiriqqa o‘tish
+</a>
+
+    </div>
+  </div>
+</section>
+
+
+<!-- 🔬 Amaliy bo‘lim -->
+<section id="amaliy-block" class="container-fluid mt-5" style="display:none;">
+  <button id="toggleBtnAmaliy" class="btn btn-outline-secondary w-100 mb-3" onclick="toggleSidebarAmaliy()">⬅️ Panelni yashirish</button>
+  <div class="row">
+    <!-- 📚 Chap panel -->
+    <div class="col-md-3 border-end" id="amaliySidebar" style="height: 80vh; overflow-y: auto;">
+      <h5 class="text-success fw-bold mb-3"> Amaliy mashg‘ulotlar</h5>
+      <ul class="list-group">
+        {% for i in amaliylar %}
+        <li class="list-group-item">
+          <!-- onclick o'rniga delegation -->
+          <button type="button" class="btn btn-link p-0 js-amaliy-link" data-amaliy="{{ i }}">📄 Amaliy {{ i }}</button>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!--  PDF + Interaktiv -->
+    <div class="col-md-9" id="amaliyContent">
+      <div id="viewerContainer" style="height: 85vh;" class="mb-3">
+        <iframe id="amaliyViewer"
+                src="{% static 'amaliy/amaliy1.pdf' %}"
+                allowfullscreen
+                style="width: 100%; height: 100%; border: none;"></iframe>
+
+
+        <!-- Interaktiv Amaliy 1 -->
+        <div id="interaktiv-1" class="interaktiv-block">
+          <canvas id="motionCanvas" width="600" height="300" style="border:1px solid gray;"></canvas><br>
+          <button type="button" class="btn btn-success" onclick="startMotion()">Simulyatsiyani boshlash</button>
+        </div>
+
+        <!-- Interaktiv Amaliy 2 -->
+        <div id="interaktiv-2" class="interaktiv-block">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="radiusInput" class="form-label">👉 Radius (metrda):</label>
+              <input type="number" class="form-control" id="radiusInput" placeholder="Masalan: 2">
+            </div>
+            <div class="col-md-3">
+              <label for="omegaInput" class="form-label">👉 Burchakli tezlik ω (rad/s):</label>
+              <input type="number" class="form-control" id="omegaInput" placeholder="Masalan: 3.14">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy2()" class="btn btn-success mb-3">🔄 Simulyatsiyani boshlash</button>
+          <div id="natija" class="mb-3 text-primary fw-bold"></div>
+          <div id="simulyatsiya-container" style="width: 100%; height: 320px;"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 3 -->
+        <div id="interaktiv-3" class="interaktiv-block">
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="massaInput" class="form-label">👉 Massa (kg):</label>
+              <input type="number" class="form-control" id="massaInput" placeholder="Masalan: 2">
+            </div>
+            <div class="col-md-3">
+              <label for="FxInput" class="form-label">👉 Kuchning X o‘qidagi komponentasi (N):</label>
+              <input type="number" class="form-control" id="FxInput" placeholder="">
+            </div>
+            <div class="col-md-3">
+              <label for="FyInput" class="form-label">👉 Kuchning Y o‘qidagi komponentasi (N):</label>
+              <input type="number" class="form-control" id="FyInput" placeholder="">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy3()" class="btn btn-success mb-3">🔄 Harakatni boshlash</button>
+          <div id="simulyatsiya-container-3" style="width: 100%; height: 340px; border: 1px solid gray;"></div>
+        </div>
+
+        <!-- ✅ Interaktiv Amaliy 4 -->
+        <div id="interaktiv-4" class="interaktiv-block">
+          <div class="row mb-3">
+            <p>
+              Massasi 2 kg bo’lgan yog’och brusok bikrligi 200 N/m bo’lgan prujina yordamida 1 m/s² tezlanish bilan tortib ketilmoqda.
+              Ishqalanish koeffisenti 0.3 ga teng. Prujinaning uzayishini toping.
+            </p>
+            <div class="col-md-3">
+              <label for="massInput" class="form-label">Massani kiriting (kg):</label>
+              <input type="number" id="massInput" class="form-control" placeholder="Masalan: 2">
+            </div>
+            <div class="col-md-3">
+              <label for="kInput" class="form-label">Prujina qattiqligi k (N/m):</label>
+              <input type="number" id="kInput" class="form-control" placeholder="Masalan: 200">
+            </div>
+            <div class="col-md-3">
+              <label for="muInput" class="form-label">Ishqalanish koeffisienti μ:</label>
+              <input type="number" id="muInput" class="form-control" placeholder="Masalan: 0.3" step="0.01">
+            </div>
+            <div class="col-md-3">
+              <label for="aInput" class="form-label">Tezlanish a (m/s²):</label>
+              <input type="number" id="aInput" class="form-control" placeholder="Masalan: 1">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy4()" class="btn btn-success mb-3">🔄 Harakatni boshlash</button>
+          <div id="spring-container" style="width: 100%; height: 340px; border: 1px solid gray;"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 5 -->
+        <div id="interaktiv-5" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>Masala 5.39 — Ideal gaz qonuni asosida hisoblash:</strong><br>
+            0,02 m³ hajmli balondagi azot molekulalari ilgarilama harakatining kinetik energiyasi 2000 J ga,
+            o‘rtacha kvadratik tezligi esa 2000 m/s ga teng.
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="energyInput" class="form-label">🔋 Kinetik energiya (J):</label>
+              <input type="number" class="form-control" id="energyInput" placeholder="Masalan: 2000">
+            </div>
+            <div class="col-md-3">
+              <label for="velocityInput" class="form-label">💨 O‘rtacha kvadratik tezlik (m/s):</label>
+              <input type="number" class="form-control" id="velocityInput" placeholder="Masalan: 2000">
+            </div>
+            <div class="col-md-3">
+              <label for="tempInput" class="form-label">🌡 Harorat (K):</label>
+              <input type="number" class="form-control" id="tempInput" placeholder="Masalan: 300">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy5()" class="btn btn-success mb-3">Hisoblash va simulyatsiya</button>
+          <div id="result-amaliy5" class="mb-3"></div>
+          <div id="canvas-container" style="width: 100%; height: 300px; border: 1px solid gray;"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 6 -->
+        <div id="interaktiv-6" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>Masala 6.26 — Izotermik kengayish:</strong><br> Ideal gazga Q issiqlik miqdori berilganda, izotermik kengayishda ish: Q = A
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-4">
+              <label for="qInput" class="form-label"> Issiqlik miqdori Q (J):</label>
+              <input type="number" class="form-control" id="qInput" placeholder="Masalan: 14">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy6()" class="btn btn-success mb-3"> Simulyatsiyani boshlash</button>
+          <div id="iso-container" style="width: 100%; height: 320px; border: 1px solid #aaa;"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 7 -->
+        <div id="interaktiv-7" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>7.2 — Kulon qonunini amalda qo‘llash</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label for="q1" class="form-label"> Zaryad q₁ (nKl):</label>
+              <input type="number" class="form-control" id="q1" placeholder="Masalan: 250">
+            </div>
+            <div class="col-md-3">
+              <label for="q2" class="form-label"> Zaryad q₂ (nKl):</label>
+              <input type="number" class="form-control" id="q2" placeholder="Masalan: 400">
+            </div>
+            <div class="col-md-3">
+              <label for="r" class="form-label"> Masofa r (sm):</label>
+              <input type="number" class="form-control" id="r" placeholder="Masalan: 10">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy7()" class="btn btn-primary mb-3"> Hisoblash va Vizualizatsiya</button>
+          <div id="resultText" class="mb-3 fw-bold"></div>
+          <canvas id="simCanvas" width="800" height="350" style="border: 1px solid #ccc;"></canvas>
+        </div>
+
+        <!-- Interaktiv Amaliy 8 -->
+        <div id="interaktiv-8" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>Masala: 8.28</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label class="form-label">🔌 Sig‘im (pF):</label>
+              <input type="number" class="form-control" id="capacitanceInput" placeholder="masalan: 20">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">⚡️ Kuchlanish (V):</label>
+              <input type="number" class="form-control" id="voltageInput" placeholder="masalan: 400">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label"> Masofa (mm):</label>
+              <input type="number" class="form-control" id="distanceInput" placeholder="masalan: 1">
+            </div>
+          </div>
+          <button type="button" onclick="startSimulationAmaliy8()" class="btn btn-primary mb-3"> Simulyatsiyani boshlash</button>
+          <div id="condensator-container" style="width: 100%; height: 320px; border: 1px solid gray;"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 9 -->
+        <div id="interaktiv-9" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>Masala: 9.15</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label class="form-label">🔋 EYK (𝓔, V):</label>
+              <input type="number" class="form-control" id="eykInput" placeholder="masalan: 3.5" value="">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">🔌 Ichki qarshilik (r, Ω):</label>
+              <input type="number" class="form-control" id="rInput" placeholder="masalan: 0.5" value="">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">🔧 Tashqi qarshilik (R, Ω):</label>
+              <input type="number" class="form-control" id="rExtInput" placeholder="masalan: 3" value="">
+            </div>
+          </div>
+          <button type="button" onclick="solveAmaliy9()" class="btn btn-primary mb-3"> Hisoblash</button>
+          <div id="resultAmaliy9" class="alert alert-success fw-bold" style="display:none;"></div>
+          <div class="col-md-12" id="canvasBox" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- Amaliy 10 -->
+         <div id="interaktiv-10" class="interaktiv-block">
+        <div class="alert alert-info">
+          <strong>Masala 10.1:</strong>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-3">
+            <label class="form-label">🔋 Voltmetr chegarasi (Vmax):</label>
+            <input type="number" class="form-control" id="vmaxInput" placeholder="masalan: 150">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">⚡️ O‘lchanadigan kuchlanish (Vdesired):</label>
+            <input type="number" class="form-control" id="vdesiredInput" placeholder="masalan: 900">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">🔧 Voltmetrning ichki qarshiligi (Ω):</label>
+            <input type="number" class="form-control" id="rInternalInput" placeholder="masalan: 1000">
+          </div>
+        </div>
+        <button type="button" onclick="startAmaliy10Simulation()" class="btn btn-primary mb-3">Hisoblash & vizualizatsiya</button>
+        <div id="resultAmaliy10" class="alert" style="display: none;"></div>
+        <canvas id="voltmetrCanvas" width="600" height="250" style="border: 1px solid #ccc;"></canvas>
+        </div>
+
+        <!-- Amaliy 11 -->
+         <div id="interaktiv-11" class="interaktiv-block">
+        <div class="alert alert-info">
+          <strong>Masala: 11.4</strong>
+        </div>
+        <div class="row">
+          <div class="col-md-3">
+            <label class="form-label">🌀 O‘ramlar soni (N):</label>
+            <input type="number" class="form-control" id="nInput" placeholder="40">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">📐 Yuzasi (sm²):</label>
+            <input type="number" class="form-control" id="sInput" placeholder="240">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">⚡ EYK (mV):</label>
+            <!-- ID kolliziyasini oldini olish uchun eykInput11 -->
+            <input type="number" class="form-control" id="eykInput11" placeholder="160">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">⏱️ Vaqt (s):</label>
+            <input type="number" class="form-control" id="tInput" placeholder="1.15">
+          </div>
+        </div>
+        <button type="button" class="btn btn-primary mt-3" onclick="startSimulationAmaliy11()"> Simulyatsiyani boshlash</button>
+        <div id="resultAmaliy11" class="mt-3"></div>
+        <div id="amaliy11-container" class="mt-3"></div>
+         </div>
+
+        <!-- Interaktiv Amaliy 12 -->
+        <div id="interaktiv-12" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>12.1 — Magnit oqimi o‘zgarish tezligi</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Kvadrat tomoni (sm):</label>
+              <input type="number" class="form-control" id="aInput12" placeholder="10">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Qarshilik (Om):</label>
+              <input type="number" class="form-control" id="rInput12" placeholder="0.1">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Tok kuchi (mA):</label>
+              <input type="number" class="form-control" id="iInput12" placeholder="1">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary mt-3" onclick="startSimulationAmaliy12()"> Simulyatsiyani boshlash</button>
+          <div id="resultAmaliy12" class="mt-3"></div>
+          <div id="amaliy12-container" class="mt-3"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 13 -->
+        <div id="interaktiv-13" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>13.1 — Tebranish davri</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Induktivlik (mH):</label>
+              <input type="number" class="form-control" id="LInput13" placeholder="1">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Qoplama diametri (sm):</label>
+              <input type="number" class="form-control" id="diameterInput13" placeholder="20">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Qoplamalar orasidagi masofa (sm):</label>
+              <input type="number" class="form-control" id="distanceInput13" placeholder="1">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary mt-3" onclick="startSimulationAmaliy13()"> Hisoblash & Vizualizatsiya</button>
+          <div id="resultAmaliy13" class="mt-3"></div>
+          <div id="amaliy13-container" class="mt-3"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 14 -->
+        <div id="interaktiv-14" class="interaktiv-block">
+          <div class="alert alert-info">
+            <strong>14.1 — Interferensiya yo‘llari masofasi</strong>
+          </div>
+          <div class="row mb-3">
+            <div class="col-md-3">
+              <label class="form-label">Yashil yorug‘lik to‘lqin uzunligi (nm):</label>
+              <input type="number" class="form-control" id="lambda1Input14" placeholder="500">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Qizil yorug‘lik to‘lqin uzunligi (nm):</label>
+              <input type="number" class="form-control" id="lambda2Input14" placeholder="650">
+            </div>
+          </div>
+          <button type="button" class="btn btn-primary mt-3" onclick="startSimulationAmaliy14()"> Hisoblash & Vizualizatsiya</button>
+          <div id="resultAmaliy14" class="mt-3"></div>
+          <div id="amaliy14-container" class="mt-3"></div>
+        </div>
+
+        <!-- Interaktiv Amaliy 15 -->
+
+<div id="interaktiv-15" class="interaktiv-block">
+  <h2 class="title">15.8 — Uzluksiz rentgen spektrining qisqa to‘lqin chegarasi (λ<sub>min</sub>)</h2>
+  <p class="subtitle">Formulalar: E=e·V, f=E/h, λ=hc/(e·V)</p>
+
+  <div class="grid">
+    <div class="card15">
+      <h3>Kirish ma'lumoti</h3>
+      <label for="volt">Anod kuchlanishi V (kV)</label>
+      <div class="row15 mb-3">
+        <input id="voltRange" type="range" min="1" max="200" value="30" step="1" />
+        <input id="volt" type="number" min="1" max="200" step="0.1" value="30" />
+        <span class="pill">V = <span id="vLabel">30</span> kV</span>
+      </div>
+      <div>
+        <div class="spectrum" id="spectrum">
+          <div id="marker" class="marker" data-label="λ_min"></div>
+        </div>
+        <div class="spec-legend">
+          <span>UV (400→10 nm)</span>
+          <span>Rentgen (10→0.01 nm)</span>
+          <span>Gamma (&lt;0.01 nm)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card15">
+      <h3>Hisob natijalari</h3>
+      <div class="kpi">
+        <div class="kbox"><div class="lbl">E<sub>max</sub></div><div class="val" id="E_keV">—</div><div class="foot" id="E_J">—</div></div>
+        <div class="kbox"><div class="lbl">f<sub>max</sub></div><div class="val" id="f_Hz">—</div><div class="foot" id="f_THz">—</div></div>
+        <div class="kbox"><div class="lbl">λ<sub>min</sub></div><div class="val" id="lam_nm">—</div><div class="foot" id="lam_pm">—</div></div>
+        <div class="kbox"><div class="lbl">Formulalar</div><div class="eq">E=e·V, f=E/h, λ=hc/E</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="{% static 'script/amaliy15.js' %}"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof initAmaliy158 === 'function') initAmaliy158('interaktiv-15');
+  });
+</script>
+        
+
+        <a href="javascript:void(0)" id="interaktivLink" class="btn btn-outline-primary mt-3" style="display: none;"> Interaktiv topshiriqqa o‘tish</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 🎥 Video bo‘lim -->
+<section id="video-block" class="container-fluid mt-5" style="display:none;">
+  <button id="toggleBtnVideo" class="btn btn-outline-secondary w-100 mb-3" onclick="toggleSidebarVideo()">⬅️ Panelni yashirish</button>
+  <div class="row">
+    <!-- Chap panel: Videodarslar -->
+    <div class="col-md-3 border-end" id="videoSidebar" style="height: 80vh; overflow-y: auto;">
+      <h5 class="text-danger fw-bold mb-3">🎬 Videodarslar</h5>
+      <ul class="list-group">
+        {% for i in videolar %}
+        <li class="list-group-item">
+          <button type="button" class="btn btn-link p-0 js-video-link" data-video="{{ i }}">
+            📹 Video {{ i }}
+          </button>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- O‘ng panel: Video ko‘rish -->
+    <div class="col-md-9" id="videoContent">
+      <video id="videoPlayer" controls style="width:100%; height:80vh; border:0;">
+        <source src="{% static 'video/video1.mp4' %}" type="video/mp4">
+        Brauzeringiz video tag’ini qo‘llab-quvvatlamaydi.
+      </video>
+    </div>
+  </div>
+</section>
+
+           
+
+<!--  JavaScript -->
+<script>
+  // Bo'limni serverdan kelgan active_section orqali boshqaramiz
+  const ACTIVE = "{{ active_section|default:'nazariy' }}";
+
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('content-area');
+    const btn = document.getElementById('toggleBtn');
+    if (sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+      content.classList.remove('col-md-12');
+      content.classList.add('col-md-9');
+      btn.innerHTML = '⬅️ Panelni yashirish';
+    } else {
+      sidebar.style.display = 'none';
+      content.classList.remove('col-md-9');
+      content.classList.add('col-md-12');
+      btn.innerHTML = '➡️ Panelni ko‘rsatish';
+    }
+  }
+
+  function toggleSidebarAmaliy() {
+    const sidebar = document.getElementById('amaliySidebar');
+    const content = document.getElementById('amaliyContent');
+    const btn = document.getElementById('toggleBtnAmaliy');
+    if (sidebar.style.display === 'none') {
+      sidebar.style.display = 'block';
+      content.classList.remove('col-md-12');
+      content.classList.add('col-md-9');
+      btn.innerHTML = '⬅️ Panelni yashirish';
+    } else {
+      sidebar.style.display = 'none';
+      content.classList.remove('col-md-9');
+      content.classList.add('col-md-12');
+      btn.innerHTML = '➡️ Panelni ko‘rsatish';
+    }
+  }
+
+  // Nazariy PDF yuklash
+ // Nazariy PDF yuklash + tugma ko‘rsatish
+function loadPDF(i) {
+  const viewer = document.getElementById("pdfViewer");
+  const link = document.getElementById("interaktivLinkNazariy");
+
+  viewer.src = window.STATIC.maruzaPdfBase + `maruza${i}.pdf`;
+  viewer.style.display = "block";
+
+  // Har bir ma’ruza uchun tugma chiqaramiz
+  link.style.display = "block";
+  link.setAttribute("data-maruza", i);
+  link.textContent = "📘 Interaktiv topshiriqqa o‘tish";
+}
+
+function showInteraktivNazariy(event) {
+  event && event.preventDefault && event.preventDefault();
+  const viewer = document.getElementById("pdfViewer");
+  const link = document.getElementById("interaktivLinkNazariy");
+  const i = link.getAttribute("data-maruza");  // maruza raqami
+
+  viewer.src = `/quiz/test/${i}/`;   // 🔹 Django URL orqali ochiladi
+  viewer.style.display = "block";
+  link.style.display = "none";
+}
+
+
+
+  // Amaliy PDF + interaktiv script yuklash
+  function loadAmaliy(i) {
+    const viewer = document.getElementById("amaliyViewer");
+    const link = document.getElementById("interaktivLink");
+    const blocks = document.querySelectorAll(".interaktiv-block");
+
+    // PDF
+    viewer.src = window.STATIC.amaliyPdfBase + `amaliy${i}.pdf`;
+    viewer.style.display = "block";
+
+
+    // Interaktivlarni yashirish
+    blocks.forEach(b => b.style.display = "none");
+
+    // Tugma sozlash
+    link.style.display = "block";
+    link.setAttribute("data-amaliy", i);
+    link.textContent = " Interaktiv topshiriqqa o‘tish";
+
+    // Eski dinamik skript bo'lsa, olib tashlash
+    const existingScript = document.getElementById("dynamicScript");
+    if (existingScript) existingScript.remove();
+
+    // Yangi skriptni yuklash
+    const s = document.createElement("script");
+    s.id = "dynamicScript";
+    s.src = window.STATIC.scriptBase + `amaliy${i}.js`;
+    s.onload = () => {
+      // Yuklangach, kerakli init funksiyani chaqirish (namuna)
+      if (Number(i) === 1 && typeof startMotion === 'function') startMotion();
+      if (Number(i) === 2 && typeof startSimulationAmaliy2 === 'function') startSimulationAmaliy2();
+      // boshqa amaliylar uchun xuddi shu tartibda qo'shishingiz mumkin
+
+      if (Number(i) === 15 && typeof initAmaliy158 === 'function') {
+    initAmaliy158('interaktiv-15');
+  }
+    };
+    document.body.appendChild(s);
+  }
+
+  function showInteraktiv(event) {
+    event && event.preventDefault && event.preventDefault();
+    const viewer = document.getElementById("amaliyViewer");
+    const link = document.getElementById("interaktivLink");
+    const i = link.getAttribute("data-amaliy");
+
+    viewer.style.display = "none";
+    link.style.display = "none";
+
+    document.querySelectorAll('.interaktiv-block').forEach(b => b.style.display = "none");
+    const current = document.getElementById(`interaktiv-${i}`);
+    if (current) current.style.display = "block";
+  }
+
+
+function toggleSidebarVideo() {
+  const sidebar = document.getElementById('videoSidebar');
+  const content = document.getElementById('videoContent');
+  const btn = document.getElementById('toggleBtnVideo');
+  if (sidebar.style.display === 'none') {
+    sidebar.style.display = 'block';
+    content.classList.remove('col-md-12');
+    content.classList.add('col-md-9');
+    btn.innerHTML = '⬅️ Panelni yashirish';
+  } else {
+    sidebar.style.display = 'none';
+    content.classList.remove('col-md-9');
+    content.classList.add('col-md-12');
+    btn.innerHTML = '➡️ Panelni ko‘rsatish';
+  }
+}
+
+// Video yuklash
+function loadVideo(i) {
+  const viewer = document.getElementById("videoViewer");
+  viewer.src = window.STATIC.videoBase + `video${i}.mp4`;  // 🔹 static/video/ ichidan
+  viewer.style.display = "block";
+}
+
+
+  // Delegation: maruza va amaliy tugmalarini ushlash
+  document.addEventListener('click', (e) => {
+  const m = e.target.closest('.js-maruza-link');
+  if (m) {
+    const i = parseInt(m.dataset.maruza, 10);
+    if (Number.isFinite(i)) loadPDF(i);
+    return;
+  }
+
+  const a = e.target.closest('.js-amaliy-link');
+  if (a) {
+    const i = parseInt(a.dataset.amaliy, 10);
+    if (Number.isFinite(i)) loadAmaliy(i);
+    return;
+  }
+
+  const v = e.target.closest('.js-video-link');
+if (v) {
+  const i = parseInt(v.dataset.video, 10);
+  if (Number.isFinite(i)) loadVideo(i);
+  return;
+}
+
+  // Interaktiv tugmalari
+  if (e.target.id === 'interaktivLink') {
+    showInteraktiv(e);
+  }
+  if (e.target.id === 'interaktivLinkNazariy') {
+    showInteraktivNazariy(e);
+  }
+});
+
+  // Bo'limlarni ko'rsatish
+document.addEventListener('DOMContentLoaded', function () {
+  const naz    = document.getElementById("nazariy-block");
+  const amaliy = document.getElementById("amaliy-block");
+  const video  = document.getElementById("video-block");
+
+  if (ACTIVE === 'nazariy') {
+    naz.style.display    = "block";
+    amaliy.style.display = "none";
+    video.style.display  = "none";
+  } else if (ACTIVE === 'amaliy') {
+    naz.style.display    = "none";
+    amaliy.style.display = "block";
+    video.style.display  = "none";
+  } else if (ACTIVE === 'video') {
+    naz.style.display    = "none";
+    amaliy.style.display = "none";
+    video.style.display  = "block";
+  } else {
+    // default: faqat nazariy chiqadi
+    naz.style.display    = "block";
+    amaliy.style.display = "none";
+    video.style.display  = "none";
+  }
+});
+
+</script>
+{% endblock %}

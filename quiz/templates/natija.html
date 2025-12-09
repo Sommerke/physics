@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+
+    <!-- Natija sarlavhasi -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary">📊 Sizning natijangiz</h2>
+        <p class="text-muted">Test bo‘yicha yakuniy ko‘rsatkichlaringiz</p>
+    </div>
+
+    <!-- Umumiy natija -->
+    <div class="card shadow-sm border-0 p-4 mb-4 text-center">
+        <h4 class="mb-3">✅ To‘g‘ri javoblar: <span class="text-success">{{ tugri }}</span> / {{ umumiy }}</h4>
+        <div class="progress" style="height: 25px;">
+            <div class="progress-bar bg-success fw-bold" role="progressbar"
+                 style="width: {{ foiz }}%;" aria-valuenow="{{ foiz }}" aria-valuemin="0" aria-valuemax="100">
+                {{ foiz }}%
+            </div>
+        </div>
+    </div>
+
+    <!-- Savollar bo‘yicha javoblar -->
+    <div class="card shadow-sm border-0 p-4">
+        <h5 class="mb-3 text-secondary">📝 Savollar bo‘yicha natijalar</h5>
+        <ul class="list-group list-group-flush">
+            {% for javob in javoblar %}
+            <li class="list-group-item d-flex flex-column">
+                <strong class="mb-2">{{ forloop.counter }}. {{ javob.savol.matn }}</strong>
+                <span>
+                    <b>Sizning javobingiz:</b> {{ javob.tanlangan_javob }}
+                    {% if javob.is_togri %}
+                        <span class="badge bg-success ms-2">To‘g‘ri ✅</span>
+                    {% else %}
+                        <span class="badge bg-danger ms-2">Noto‘g‘ri ❌</span>
+                        <small class="text-muted ms-2">To‘g‘ri javob: {{ javob.savol.togri_javob }}</small>
+                    {% endif %}
+                </span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
+<!-- Qo‘shimcha style -->
+<style>
+    .card {
+        border-radius: 15px;
+    }
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 15px 10px;
+    }
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

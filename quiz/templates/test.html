@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+
+    <!-- Sarlavha -->
+    <div class="text-center mb-5">
+        <h2 class="fw-bold text-primary">{{ maruza }} uchun test</h2>
+        <p class="text-muted">Savollarga to‘g‘ri javob bering va natijani bilib oling ✨</p>
+    </div>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="row g-4">
+            {% for savol in savollar %}
+            <div class="col-12">
+                <div class="card shadow-lg border-0 mb-4 quiz-card">
+                    <div class="card-body">
+                        <h5 class="card-title fw-semibold text-dark mb-3">
+                            {{ forloop.counter }}. {{ savol.matn }}
+                        </h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check option-box">
+                                    <input class="form-check-input" type="radio" name="savol_{{ savol.id }}" value="A" required>
+                                    <label class="form-check-label">A) {{ savol.variant_a }}</label>
+                                </div>
+                                <div class="form-check option-box">
+                                    <input class="form-check-input" type="radio" name="savol_{{ savol.id }}" value="B">
+                                    <label class="form-check-label">B) {{ savol.variant_b }}</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check option-box">
+                                    <input class="form-check-input" type="radio" name="savol_{{ savol.id }}" value="C">
+                                    <label class="form-check-label">C) {{ savol.variant_c }}</label>
+                                </div>
+                                <div class="form-check option-box">
+                                    <input class="form-check-input" type="radio" name="savol_{{ savol.id }}" value="D">
+                                    <label class="form-check-label">D) {{ savol.variant_d }}</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Submit tugma -->
+        <div class="text-center mt-5">
+            <button type="submit" class="btn btn-lg btn-success px-5 shadow-lg fw-bold">
+                ✅ Natijani ko‘rish
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Qo‘shimcha style -->
+<style>
+    .quiz-card {
+        border-radius: 15px;
+        transition: all 0.3s ease-in-out;
+    }
+    .quiz-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0px 6px 20px rgba(0,0,0,0.12);
+    }
+    .form-check {
+        margin-bottom: 12px;
+    }
+    .option-box {
+        background: #f8f9fa;
+        padding: 10px 15px;
+        border-radius: 8px;
+        transition: 0.2s;
+    }
+    .option-box:hover {
+        background: #e9f7ef;
+    }
+    .form-check-input:checked + .form-check-label {
+        font-weight: 600;
+        color: #198754; /* Bootstrap success green */
+    }
+    button.btn {
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}

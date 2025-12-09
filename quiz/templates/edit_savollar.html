@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h3 class="text-primary">{{ maruza }} uchun testlarni tahrirlash</h3>
+    <form method="post">
+        {% csrf_token %}
+        {% for savol in savollar %}
+        <div class="card mb-3 shadow-sm">
+            <div class="card-body">
+                <h5>Savol {{ forloop.counter }}</h5>
+                <input type="text" class="form-control mb-2" name="matn_{{ savol.id }}" value="{{ savol.matn }}">
+                <div class="row">
+                    <div class="col-md-6">
+                        <input type="text" class="form-control mb-2" name="variant_a_{{ savol.id }}" value="{{ savol.variant_a }}">
+                        <input type="text" class="form-control mb-2" name="variant_b_{{ savol.id }}" value="{{ savol.variant_b }}">
+                    </div>
+                    <div class="col-md-6">
+                        <input type="text" class="form-control mb-2" name="variant_c_{{ savol.id }}" value="{{ savol.variant_c }}">
+                        <input type="text" class="form-control mb-2" name="variant_d_{{ savol.id }}" value="{{ savol.variant_d }}">
+                    </div>
+                </div>
+                <label>✅ To‘g‘ri javob:</label>
+                <select class="form-select" name="togri_{{ savol.id }}">
+                    <option value="A" {% if savol.togri_javob == "A" %}selected{% endif %}>A</option>
+                    <option value="B" {% if savol.togri_javob == "B" %}selected{% endif %}>B</option>
+                    <option value="C" {% if savol.togri_javob == "C" %}selected{% endif %}>C</option>
+                    <option value="D" {% if savol.togri_javob == "D" %}selected{% endif %}>D</option>
+                </select>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">❌ Bu maruza uchun test savollari mavjud emas.</p>
+        {% endfor %}
+        <div class="mt-3">
+            <button type="submit" class="btn btn-success">💾 Saqlash</button>
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-secondary">⬅️ Orqaga</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block content %}
+<div class="container mt-5" style="max-width: 750px;">
+    <div class="card shadow p-4 border-0">
+        <h3 class="mb-4 text-center text-primary">📋 Yangi Test Savoli Qo‘shish</h3>
+
+        <!-- ✅ Xabarlar -->
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Yopish"></button>
+            </div>
+        {% endfor %}
+
+        <!-- ✅ Forma boshlanishi -->
+        <form method="post" novalidate>
+            {% csrf_token %}
+
+            <div class="mb-3">
+                <label class="form-label">📘 Maruza raqami:</label>
+                {{ form.maruza|add_class:"form-select" }}
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label">📝 Savol matni:</label>
+                {{ form.matn|add_class:"form-control" }}
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">🔹 Variant A:</label>
+                    {{ form.variant_a|add_class:"form-control" }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">🔹 Variant B:</label>
+                    {{ form.variant_b|add_class:"form-control" }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">🔹 Variant C:</label>
+                    {{ form.variant_c|add_class:"form-control" }}
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label">🔹 Variant D:</label>
+                    {{ form.variant_d|add_class:"form-control" }}
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">✅ To‘g‘ri javob (A/B/C/D):</label>
+                {{ form.togri_javob|add_class:"form-select" }}
+            </div>
+
+            <!-- Tugmalar -->
+            <div class="d-flex justify-content-between">
+                <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+                    ⬅️ Orqaga
+                </a>
+                <button type="submit" class="btn btn-success">
+                    ➕ Keyingi Savolni Qo‘shish
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

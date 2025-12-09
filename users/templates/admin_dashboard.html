@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+
+    <!-- Sarlavha -->
+    <div class="text-center mb-4">
+        <h2 class="fw-bold text-primary">👨‍💻 Admin Paneli</h2>
+        <p class="text-muted">Bu yerda ma’ruzalarni yangilash, foydalanuvchilarni boshqarish va testlarni tahrirlash mumkin.</p>
+    </div>
+
+    <!-- ✅ PDF formasi -->
+    <div class="card shadow-sm p-4 mb-5">
+        <h4 class="mb-3 text-secondary">📄 Ma’ruza faylini yangilash</h4>
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ maruza_form.as_p }}
+            <button type="submit" class="btn btn-primary w-100">⬆️ Yuklash</button>
+        </form>
+    </div>
+
+    <!-- ✅ Foydalanuvchilar -->
+    <div class="card shadow-sm p-4 mb-5">
+        <h4 class="mb-3 text-secondary">👥 Foydalanuvchilar ro‘yxati</h4>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle text-center">
+                <thead class="table-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>Ism Familiya</th>
+                        <th>Email</th>
+                        <th>Amallar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.get_full_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td>
+                            <!-- Edit button -->
+                            <button class="btn btn-sm btn-warning" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#editUserModal{{ user.id }}">
+                                ✏️ Tahrirlash
+                            </button>
+                            <!-- Delete button -->
+                            <a href="{% url 'delete_user' user.id %}" 
+                               class="btn btn-sm btn-danger"
+                               onclick="return confirm('Ishonchingiz komilmi?')">
+                               🗑 O‘chirish
+                            </a>
+                        </td>
+                    </tr>
+
+                    <!-- Modal (har bir user uchun) -->
+                    <div class="modal fade" id="editUserModal{{ user.id }}" tabindex="-1">
+                      <div class="modal-dialog">
+                        <div class="modal-content">
+                          <div class="modal-header">
+                            <h5 class="modal-title">✏️ {{ user.get_full_name }} ni tahrirlash</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                          </div>
+                          <div class="modal-body">
+                            <form method="post" action="{% url 'update_user' user.id %}">
+                                {% csrf_token %}
+                                <div class="mb-3">
+                                    <label class="form-label">Ism</label>
+                                    <input type="text" class="form-control" name="first_name" value="{{ user.first_name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Familiya</label>
+                                    <input type="text" class="form-control" name="last_name" value="{{ user.last_name }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" class="form-control" name="email" value="{{ user.email }}">
+                                </div>
+                                <div class="text-end">
+                                    <button type="submit" class="btn btn-success">💾 Saqlash</button>
+                                </div>
+                            </form>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                {% empty %}
+                    <tr><td colspan="4" class="text-muted">❌ Foydalanuvchilar mavjud emas</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ✅ Orqaga va Qo‘shish tugmalari -->
+    <div class="d-flex justify-content-between mb-4">
+        <a href="{% url 'asosiy' %}" class="btn btn-outline-secondary w-50 me-2">⬅️ Orqaga qaytish</a>
+        <a href="{% url 'add_savol' %}" class="btn btn-success w-50 ms-2">➕ Test Savoli Qo‘shish</a>
+    </div>
+
+    <!-- ✅ Testni tahrirlash -->
+    <div class="card shadow-sm p-4 mb-4">
+        <h4 class="mb-3 text-secondary">✏️ Testni tahrirlash</h4>
+        <form method="get" action="{% url 'edit_savollar' 1 %}">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label">Maruzani tanlang:</label>
+                    <select name="maruza_id" class="form-select"
+                            onchange="this.form.action=this.form.action.replace('1', this.value)">
+                        {% for i in maruzalar %}
+                        <option value="{{ i }}">Maruza {{ i }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <button type="submit" class="btn btn-warning w-100">✏️ Ochish</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- ✅ Test natijalarini ko‘rish -->
+    <div class="card shadow-sm p-4 mt-4">
+        <h4 class="mb-3 text-secondary">📊 Test natijalari</h4>
+        <a href="{% url 'results' %}" class="btn btn-info w-100">📊 Natijalarni ko‘rish</a>
+    </div>
+</div>
+
+<!-- Qo‘shimcha stil -->
+<style>
+    .btn {
+        min-height: 45px;
+        font-weight: 500;
+    }
+    .table th, .table td {
+        vertical-align: middle;
+    }
+    .card {
+        border-radius: 12px;
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h3 class="fw-bold text-primary mb-4">📖 {{ maruza.nom }} — javoblar</h3>
+    <ul class="list-group">
+        {% for j in javoblar %}
+        <li class="list-group-item">
+            <strong>{{ forloop.counter }}. {{ j.savol.matn }}</strong><br>
+            Sizning javobingiz: <b>{{ j.tanlangan_javob }}</b>
+            {% if j.is_togri %}
+                <span class="badge bg-success ms-2">To‘g‘ri ✅</span>
+            {% else %}
+                <span class="badge bg-danger ms-2">Noto‘g‘ri ❌</span>
+                <small class="text-muted ms-2">To‘g‘ri: {{ j.savol.togri_javob }}</small>
+            {% endif %}
+        </li>
+        {% empty %}
+        <li class="list-group-item text-muted">❌ Javoblar yo‘q</li>
+        {% endfor %}
+    </ul>
+    <div class="mt-4">
+        <a href="{% url 'results' %}" class="btn btn-outline-secondary">⬅️ Orqaga</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="register-box mt-5">
+    <h2 class="text-center mb-4">Ro‘yxatdan o‘tish</h2>
+    <form method="POST" class="form-style">
+        {% csrf_token %}
+        <div class="form-group">
+            {{ form.first_name.label_tag }}
+            {{ form.first_name }}
+        </div>
+        <div class="form-group">
+            {{ form.last_name.label_tag }}
+            {{ form.last_name }}
+        </div>
+        <div class="form-group">
+            {{ form.email.label_tag }}
+            {{ form.email }}
+        </div>
+        <div class="form-group">
+            {{ form.parol.label_tag }}
+            {{ form.parol }}
+        </div>
+        <div class="form-group">
+            {{ form.parol_takror.label_tag }}
+            {{ form.parol_takror }}
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mt-3">Yuborish</button>
+    </form>
+</div>
+{% endblock %}
